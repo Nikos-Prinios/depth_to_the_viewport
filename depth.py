@@ -64,9 +64,7 @@ def face_loc(frame):
             pt1 = facial_landmarks.landmark[6]
             new_loc[0] = -pt1.x -.5
             new_loc[1] = -pt1.y -.5
-            new_loc[2] = -pt1.z -.5
-            loc = Vector( (new_loc[0],new_loc[1],new_loc[2]) )
-        return loc
+            new_loc[2] = -pt1.z -.s
     except :
         return Vector( (0.0,0.0,0.0) )
 
