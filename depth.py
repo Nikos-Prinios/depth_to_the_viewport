@@ -101,9 +101,9 @@ def face_track() :
 """
 """
 
-class ModalTimerOperator(bpy.types.Operator):
-    bl_idname = "wm.modal_timer_operator"
-    bl_label = "Modal Timer Operator"
+class ModalDepthOperator(bpy.types.Operator):
+    bl_idname = "wm.modal_depth_operator"
+    bl_label = "Modal Depth Operator"
 
     _timer = None
 
@@ -129,18 +129,16 @@ class ModalTimerOperator(bpy.types.Operator):
         wm.event_timer_remove(self._timer)
 
 def menu_func(self, context):
-    self.layout.operator(ModalTimerOperator.bl_idname, text=ModalTimerOperator.bl_label)
+    self.layout.operator(ModalDepthOperator.bl_idname, text=ModalDepthOperator.bl_label)
 
 def register():
-    bpy.utils.register_class(ModalTimerOperator)
-    bpy.types.VIEW3D_MT_view.append(menu_func)
+    bpy.utils.register_class(ModalDepthOperator) 
 
 def unregister():
-    bpy.utils.unregister_class(ModalTimerOperator)
-    bpy.types.VIEW3D_MT_view.remove(menu_func)
+    bpy.utils.unregister_class(ModalDepthOperator)
 
 if __name__ == "__main__":
     register()
 
     # call
-    bpy.ops.wm.modal_timer_operator()
+    bpy.ops.wm.modal_depth_operator()
