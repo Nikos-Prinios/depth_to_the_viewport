@@ -1,9 +1,6 @@
-import bpy
-import cv2
-import numpy as np
+import bpy, cv2, math
 import mediapipe as mp
 from mathutils import Vector
-import math
 
 """ ESCAPE TO STOP THE SCRIPT """
 
