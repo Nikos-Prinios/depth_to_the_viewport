@@ -31,34 +31,34 @@ cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 120)
 cap.set(cv2.CAP_PROP_FPS, 30)
 
 # Vectors
-old = Vector((0.0,0.0,0.0))
-new = Vector((0.0,0.0,0.0))
-old_zoom = 0.0
+old_location = Vector((0.0,0.0,0.0))
+location = Vector((0.0,0.0,0.0))
+old_distance = 0.0
 target_obj = bpy.data.objects["viewport_target"]
 
 # Offset factor (min 1)
-loc_factor = 10
+location_factor = 10
 zoom_factor = 30
 zoom_buffer = []
 
 """ Functions """
         
-def view_update(new, distance) :
-    global old, old_zoom, zoom_buffer
+def view_update(location, distance) :
+    global old_location, old_distance, zoom_buffer
     
-    loc = (old - new) * loc_factor
-    zoom = (old_zoom - distance) * zoom_factor
+    # calculate location and distance
+    loc = (old_location - location) * location_factor
+    zoom = (old_distance - distance) * zoom_factor
     zoom_buffer.append(zoom)
-    if len(zoom_buffer)==10:
+    if len(zoom_buffer) == 10:
         zoom_buffer.pop(0)
-    zoom_mean = sum(zoom_buffer) / len(zoom_buffer)
-
+    zoom_mean = sum(zoom_buffer) / len(zoom_buffer) # smoothing the zoom a bit
+    # update the viewport(s)
     for area in bpy.context.screen.areas:
         if area.type == 'VIEW_3D':
             r3d = area.spaces.active.region_3d
             target  = area.spaces.active.region_3d.view_location
-            cam = r3d.view_rotation
-            target_obj.rotation_quaternion = cam
+            target_obj.rotation_quaternion = r3d.view_rotation
             target_obj.location = target
             i = target_obj.matrix_world.copy()
             i.invert()
@@ -66,9 +66,10 @@ def view_update(new, distance) :
             target_obj.location = target_obj.location + i_rot
             r3d.view_location = target_obj.location
             r3d.view_distance += zoom_mean
-            #
-            old = new
-            old_zoom = distance
+            
+    # update variables for next round
+    old_location = location
+    old_distance = distance
 
 def face_loc(frame):
     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -76,28 +77,29 @@ def face_loc(frame):
     new_loc = [0,0,0]
     try:
         for facial_landmarks in result.multi_face_landmarks:
+            
             # face position
-            pt1 = facial_landmarks.landmark[6]
-            new_loc[0] = -pt1.x -.5
-            new_loc[1] = -pt1.y -.5
-            new_loc[2] = -pt1.z -.5
+            face = facial_landmarks.landmark[6]
+            new_loc[0] = -face.x -.5
+            new_loc[1] = -face.y -.5
+            new_loc[2] = -face.z -.5
             loc = Vector( (new_loc[0],new_loc[1],new_loc[2]) )
+            
             # eyes distance for zooming
             left = facial_landmarks.landmark[243]
             left_eye = [(left.x-.5),(left.y-.5)]
             right = facial_landmarks.landmark[463]
             right_eye = [(right.x-.5),(right.y-.5)]
             dist = math.dist([right_eye[0],right_eye[1]], [left_eye[0],left_eye[1]])
+            
         return loc,dist
     except :
         return Vector( (0.0,0.0,0.0) ), 0.0
 
 def face_track() :
     ret, frame = cap.read()
-    cv2.imshow("webcam",frame)
-    new, distance = face_loc(frame)
-    view_update(new, distance)
-    
+    location, distance = face_loc(frame)
+    view_update(location, distance)
 
 """
 """
@@ -143,5 +145,5 @@ def unregister():
 if __name__ == "__main__":
     register()
 
-    # test call
+    # call
     bpy.ops.wm.modal_timer_operator()
